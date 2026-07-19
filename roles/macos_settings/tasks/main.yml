@@ -92,10 +92,13 @@
     path: "/Applications/Microsoft Outlook.app"
   register: outlook_app
 
-- name: Associate .ics files with Outlook
-  ansible.builtin.command: "duti -s com.microsoft.Outlook .ics all"
+- name: Associate .ics files and mailto links with Outlook
+  ansible.builtin.command: "duti -s com.microsoft.Outlook {{ item }} all"
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
+  loop:
+    - .ics
+    - mailto
   when: outlook_app.stat.exists
   changed_when: true
 
