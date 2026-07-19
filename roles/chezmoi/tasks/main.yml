@@ -1,7 +1,0 @@
----
-- name: Initialize chezmoi from the dotfiles repo
-  ansible.builtin.command: "chezmoi init {{ chezmoi_github_user }}"
-  environment:
-    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
-  args:
-    creates: "{{ ansible_env.HOME }}/.local/share/chezmoi"

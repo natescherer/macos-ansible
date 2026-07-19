@@ -1,6 +1,6 @@
 ---
-# `mas` can no longer sign in via the CLI (Apple removed that API), so the
-# user must already be signed into the App Store app before this role runs.
+# The user must be signed into the Mac App Store for this role to work, 
+# if not, the role will warn the user and skip installing Mac App Store apps.
 - name: Check Mac App Store sign-in status
   ansible.builtin.command: mas account
   environment:

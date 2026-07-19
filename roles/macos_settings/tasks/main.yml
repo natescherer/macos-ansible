@@ -1,10 +1,4 @@
 ---
-# Only settings with a stable, scriptable mechanism are handled here. A lot
-# of what's in the "Settings App" section of buildguide.md (Control Center
-# modules, menu bar items, Bluetooth pairing, Touch ID enrollment, etc.) has
-# no reliable `defaults write` equivalent on current macOS and/or requires
-# interactive/biometric input — those are listed by the manual_checklist
-# role instead.
 
 - name: Check current appearance mode
   ansible.builtin.command: >-

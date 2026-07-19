@@ -1,11 +1,7 @@
 ---
-# Chezmoi
-chezmoi_github_user: natescherer
-
 # Homebrew taps
 homebrew_taps:
   - domt4/autoupdate
-  - powershell/tap
 
 # homebrew-autoupdate schedule/flags — see https://github.com/DomT4/homebrew-autoupdate
 # Runs every 43200 seconds (12h), upgrading + cleaning up automatically.
@@ -31,7 +27,6 @@ homebrew_formulas:
 
 # Casks (GUI apps / fonts)
 homebrew_casks:
-  - 1password
   - 1password-cli
   - alt-tab
   - anylist
@@ -55,8 +50,8 @@ homebrew_casks:
 
 # Mac App Store apps: name -> App Store numeric id
 mac_app_store_apps:
+  1Password: 443987910
   Amphetamine: 937984704
-  Bitwarden: 1352778147
   Clocker: 1056643111
   Kindle: 302584613
   "Microsoft 365": 1450038993

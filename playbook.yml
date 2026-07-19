@@ -9,9 +9,5 @@
       tags: homebrew
     - role: mac_app_store
       tags: mac_app_store
-    - role: macos_defaults
-      tags: macos_defaults
-    - role: chezmoi
-      tags: chezmoi
-    - role: manual_checklist
-      tags: manual_checklist
+    - role: macos_settings
+      tags: macos_settings
