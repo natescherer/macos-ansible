@@ -21,6 +21,7 @@ Package lists and Mac App Store IDs live in [group_vars/all.yml](group_vars/all.
 3. Install Ansible via Homebrew: `brew install ansible`
 4. `ansible-galaxy collection install -r requirements.yml`
 5. Sign into your Apple Account (Settings > Apple Account)
+6. Set the hostname of your mac
 
 ## Workflow
 
