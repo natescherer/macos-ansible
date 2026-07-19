@@ -65,6 +65,7 @@
     - { key: ShowPathbar, type: bool, value: true }
     - { key: ShowStatusBar, type: bool, value: true }
     - { key: FXPreferredViewStyle, type: string, value: Nlsv }
+    - { key: AppleShowAllFiles, type: bool, value: true }
   notify: Restart Finder
 
 - name: Show all filename extensions in Finder
