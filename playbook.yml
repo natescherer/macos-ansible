@@ -4,32 +4,44 @@
   connection: local
   gather_facts: true
 
-  pre_tasks:
-    # Some Homebrew casks call `sudo` finish installing. That nested sudo
-    # call has no controlling terminal to prompt on, so it just fails unless
-    # a sudo ticket for this user is already warm. This seeds one,
-    # then keeps it refreshed in the background for the rest of the run.
-    - name: Seed a sudo ticket for this user
-      ansible.builtin.command: /usr/bin/true
+  vars:
+    sudoers_dropin: /etc/sudoers.d/ansible-macos-build
+
+  tasks:
+    # Some Homebrew casks (docker-desktop, git-credential-manager, etc.) call
+    # `sudo` internally to finish installing, and that nested call has no
+    # controlling terminal to prompt on. A "keep the sudo ticket warm"
+    # background loop isn't reliable here — Ansible's async tasks detach
+    # into their own session, so they don't share a ticket with the sibling
+    # task actually running `brew install`. Granting temporary NOPASSWD sudo
+    # for the run sidesteps that entirely, and the `always` block below
+    # guarantees it gets revoked even if a task in the middle fails.
+    - name: Allow passwordless sudo for the duration of this run
+      ansible.builtin.copy:
+        dest: "{{ sudoers_dropin }}"
+        content: "{{ ansible_facts.user_id }} ALL=(ALL) NOPASSWD: ALL\n"
+        mode: "0440"
+        validate: "visudo -cf %s"
       become: true
-      changed_when: false
       tags: always
 
-    - name: Keep the sudo ticket warm for the rest of the run
-      ansible.builtin.shell: |
-        for i in $(seq 1 90); do
-          sudo -n true 2>/dev/null
-          sleep 60
-        done
-      async: 5400
-      poll: 0
-      changed_when: false
-      tags: always
+    - name: Run the build
+      block:
+        - ansible.builtin.include_role:
+            name: homebrew
+          tags: homebrew
 
-  roles:
-    - role: homebrew
-      tags: homebrew
-    - role: mac_app_store
-      tags: mac_app_store
-    - role: macos_settings
-      tags: macos_settings
+        - ansible.builtin.include_role:
+            name: mac_app_store
+          tags: mac_app_store
+
+        - ansible.builtin.include_role:
+            name: macos_settings
+          tags: macos_settings
+      always:
+        - name: Revoke passwordless sudo
+          ansible.builtin.file:
+            path: "{{ sudoers_dropin }}"
+            state: absent
+          become: true
+          tags: always
