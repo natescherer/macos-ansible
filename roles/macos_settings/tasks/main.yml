@@ -80,7 +80,7 @@
 - name: Set Firefox as the default browser and web-page handler
   ansible.builtin.command: "duti -s org.mozilla.firefox {{ item }} all"
   environment:
-    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
   loop:
     - public.html
     - http
@@ -95,7 +95,7 @@
 - name: Associate .ics files and mailto links with Outlook
   ansible.builtin.command: "duti -s com.microsoft.Outlook {{ item }} all"
   environment:
-    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
   loop:
     - .ics
     - mailto
