@@ -77,6 +77,19 @@
     state: present
   notify: Restart Finder
 
+- name: Check whether Firefox is installed
+  ansible.builtin.stat:
+    path: "/Applications/Firefox.app"
+  register: firefox_app
+
+# The below fixes a possible race condition with Launch Services not recognizing newly installed apps immediately.
+- name: Force Launch Services to (re)register Firefox
+  ansible.builtin.command: >-
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+    -f /Applications/Firefox.app
+  when: firefox_app.stat.exists
+  changed_when: false
+
 - name: Set Firefox as the default browser and web-page handler
   ansible.builtin.command: "duti -s org.mozilla.firefox {{ item }} all"
   environment:
@@ -85,12 +98,21 @@
     - public.html
     - http
     - https
+  when: firefox_app.stat.exists
   changed_when: true
 
 - name: Check whether Outlook is installed
   ansible.builtin.stat:
     path: "/Applications/Microsoft Outlook.app"
   register: outlook_app
+
+# The below fixes a possible race condition with Launch Services not recognizing newly installed apps immediately.
+- name: Force Launch Services to (re)register Outlook
+  ansible.builtin.command: >-
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+    -f "/Applications/Microsoft Outlook.app"
+  when: outlook_app.stat.exists
+  changed_when: false
 
 - name: Associate .ics files and mailto links with Outlook
   ansible.builtin.command: "duti -s com.microsoft.Outlook {{ item }} all"
