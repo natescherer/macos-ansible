@@ -16,12 +16,22 @@ Package lists and Mac App Store IDs live in [group_vars/all.yml](group_vars/all.
 
 ## Prerequisites
 
-1. macOS with Xcode Command Line Tools (`xcode-select --install`).
-2. Install Homebrew via the instructions at <https://brew.sh>
-3. Install Ansible via Homebrew: `brew install ansible`
-4. `ansible-galaxy collection install -r requirements.yml`
-5. Sign into your Apple Account (Settings > Apple Account)
-6. Set the hostname of your mac
+1. Set the hostname of your mac
+2. Sign into your Apple Account (Settings > Apple Account)
+   - Alternately, if this is a VM or whatever, you can just sign into the App Store
+
+```shell
+xcode-select --install
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
+brew install ansible
+ansible-galaxy collection install -r requirements.yml
+```
+
+3. macOS with Xcode Command Line Tools (`xcode-select --install`).
+4. Install Homebrew via the instructions at <https://brew.sh>
+5. Install Ansible via Homebrew: `brew install ansible`
+6. `ansible-galaxy collection install -r requirements.yml`
 
 ## Workflow
 
