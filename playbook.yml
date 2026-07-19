@@ -1,0 +1,17 @@
+---
+- name: Build a new Mac
+  hosts: mac
+  connection: local
+  gather_facts: true
+
+  roles:
+    - role: homebrew
+      tags: homebrew
+    - role: mac_app_store
+      tags: mac_app_store
+    - role: macos_defaults
+      tags: macos_defaults
+    - role: chezmoi
+      tags: chezmoi
+    - role: manual_checklist
+      tags: manual_checklist

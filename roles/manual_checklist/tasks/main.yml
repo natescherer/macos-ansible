@@ -1,0 +1,43 @@
+---
+# Not everything in buildguide.md can be scripted: App Store sign-ins,
+# device pairing, biometric enrollment, and license/EULA-gated GUI installs
+# all need a human at the keyboard. This role does the one bit of that
+# section that *is* safely automatable (creating the Obsidian vault
+# directory) and then prints everything else as a checklist to finish by
+# hand.
+
+- name: Ensure ~/obsidian directory exists for vault sync
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/obsidian"
+    state: directory
+    mode: "0755"
+
+- name: Print remaining manual steps
+  ansible.builtin.debug:
+    msg: "{{ manual_steps }}"
+  vars:
+    manual_steps:
+      - "=== Bitwarden (installed via mas) ==="
+      - "Log into Bitwarden; enable the SSH agent in Settings > SSH Agent"
+      - "Set Bitwarden to run at startup (Settings > General)"
+      - "Enable biometric unlock for the Firefox and Brave browser extensions"
+      - ""
+      - "=== Obsidian ==="
+      - "Point the Obsidian app at ~/obsidian to sync the Main vault"
+      - "Configure a MEGAsync backup of ~/obsidian"
+      - ""
+      - "=== Manual (non-brew) installs ==="
+      - "VMware Fusion: https://blogs.vmware.com/teamfusion/2024/05/fusion-pro-now-available-free-for-personal-use.html"
+      - ""
+      - "=== System Settings app (no stable CLI/defaults equivalent) ==="
+      - "Apple Account: sign in"
+      - "Bluetooth: pair devices"
+      - "General > Date & Time: set time zone automatically using current location"
+      - "General > Language & Region: enable Live Text"
+      - "Control Center: Wi-Fi=Show, Bluetooth/AirDrop=Don't Show, Focus=Show when Active, Stage Manager=Don't Show, Screen Mirroring/Display=Show when Active, Sound=Always Show"
+      - "Control Center > Battery: hide in menu bar, show in Control Center, show percentage"
+      - "Control Center > Menu Bar Only: Clock style=Analog (skip if not using Clocker), hide Spotlight/Siri/Time Machine/Weather"
+      - "Menu bar: set 'Automatically hide and show the menu bar' to In Full Screen Only"
+      - "Desktop & Dock: set Size/Magnification to taste; enable edge/menu-bar window tiling to taste"
+      - "Touch ID & Password: enroll a fingerprint"
+      - "Printers & Scanners: add your printer"
