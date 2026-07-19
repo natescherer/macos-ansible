@@ -77,12 +77,23 @@
     state: present
   notify: Restart Finder
 
+# Setting the default web browser (the http URL scheme, which macOS also
+# propagates to https and public.html) always pops a system confirmation
+# dialog that a human has to click through — a deliberate anti-hijacking
+# measure, not a tooling limitation. duti can't get past this (it just
+# errors out non-interactively), so we use utiluti instead: it's a modern,
+# signed/notarized replacement that handles the same dialog properly rather
+# than choking on it. The command blocks until the dialog is answered — if
+# nobody's at the screen, the playbook just waits there — and if the user
+# rejects the change, that's a non-zero exit we deliberately don't fail the
+# play on (failed_when: false), since a "no" is a valid outcome, not a
+# broken run. See https://github.com/scriptingosx/utiluti
+
 - name: Check whether Firefox is installed
   ansible.builtin.stat:
     path: "/Applications/Firefox.app"
   register: firefox_app
 
-# The below fixes a possible race condition with Launch Services not recognizing newly installed apps immediately.
 - name: Force Launch Services to (re)register Firefox
   ansible.builtin.command: >-
     /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
@@ -90,16 +101,13 @@
   when: firefox_app.stat.exists
   changed_when: false
 
-- name: Set Firefox as the default browser and web-page handler
-  ansible.builtin.command: "duti -s org.mozilla.firefox {{ item }} all"
+- name: Set Firefox as the default browser
+  ansible.builtin.command: utiluti url set http org.mozilla.firefox
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
-  loop:
-    - public.html
-    - http
-    - https
   when: firefox_app.stat.exists
   changed_when: true
+  failed_when: false
 
 - name: Check whether Outlook is installed
   ansible.builtin.stat:
@@ -114,15 +122,25 @@
   when: outlook_app.stat.exists
   changed_when: false
 
-- name: Associate .ics files and mailto links with Outlook
-  ansible.builtin.command: "duti -s com.microsoft.Outlook {{ item }} all"
+- name: Set Outlook as the default mail app
+  ansible.builtin.command: utiluti url set mailto com.microsoft.Outlook
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
-  loop:
-    - .ics
-    - mailto
   when: outlook_app.stat.exists
   changed_when: true
+  failed_when: false
+
+# .ics is a file-type/UTI association rather than a URL scheme — still
+# scriptable as of this writing, but macOS 26.4+ started requiring the same
+# kind of confirmation for some file-type changes too, so this may start
+# prompting the same way on a future OS update.
+- name: Associate .ics files with Outlook
+  ansible.builtin.command: utiluti type set extension:ics com.microsoft.Outlook
+  environment:
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
+  when: outlook_app.stat.exists
+  changed_when: true
+  failed_when: false
 
 - name: Enable Touch ID for sudo
   ansible.builtin.shell: |
