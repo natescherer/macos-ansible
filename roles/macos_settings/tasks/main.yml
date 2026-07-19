@@ -50,6 +50,31 @@
   become: true
   changed_when: true
 
+- name: Configure Finder behavior
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+    state: present
+  loop:
+    - { key: NewWindowTarget, type: string, value: PfHm }
+    - { key: ShowRecentTags, type: bool, value: false }
+    - { key: _FXSortFoldersFirst, type: bool, value: true }
+    - { key: ShowTabView, type: bool, value: true }
+    - { key: ShowPathbar, type: bool, value: true }
+    - { key: ShowStatusBar, type: bool, value: true }
+  notify: Restart Finder
+
+- name: Show all filename extensions in Finder
+  community.general.osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleShowAllExtensions
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
 - name: Set Firefox as the default browser and web-page handler
   ansible.builtin.command: "duti -s org.mozilla.firefox {{ item }} all"
   environment:

@@ -8,3 +8,8 @@
   ansible.builtin.command: killall ControlCenter
   changed_when: true
   failed_when: false
+
+- name: Restart Finder
+  ansible.builtin.command: killall Finder
+  changed_when: true
+  failed_when: false

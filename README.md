@@ -75,3 +75,12 @@ Unfortunately, not everything can be automated. The following needs done manuall
   - Enroll a fingerprint.
 - **Printers & Scanners**
   - Add printer
+
+### Finder Settings
+
+- **Sidebar**
+  - Uncheck `Shared`,
+  - Uncheck `iCloud Drive`
+  - Uncheck `AirDrop`
+  - Uncheck `Bonjour computers`
+  - Uncheck `Connected servers`
