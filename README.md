@@ -19,19 +19,22 @@ Package lists and Mac App Store IDs live in [group_vars/all.yml](group_vars/all.
 1. Set the hostname of your mac
 2. Sign into your Apple Account (Settings > Apple Account)
    - Alternately, if this is a VM or whatever, you can just sign into the App Store
+3. Run the below to start the process of installing the Xcode Command Line Tools:
 
 ```shell
 xcode-select --install
+```
+
+4. Wait for the tools to install before continuing
+5. Run the below to install the other requirements to run the ansible playbook:
+
+```shell
+
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)"
 brew install ansible
 ansible-galaxy collection install -r requirements.yml
 ```
-
-3. macOS with Xcode Command Line Tools (`xcode-select --install`).
-4. Install Homebrew via the instructions at <https://brew.sh>
-5. Install Ansible via Homebrew: `brew install ansible`
-6. `ansible-galaxy collection install -r requirements.yml`
 
 ## Workflow
 
