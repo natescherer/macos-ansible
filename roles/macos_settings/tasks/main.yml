@@ -45,15 +45,12 @@
     state: present
   notify: Restart Control Center
 
-# On a Mac with a battery, pmset -g custom splits settings into separate
-# "AC Power:"/"Battery Power:" sections and disablesleep appears once per
-# section, so this has to track which one it's currently under. On a
-# battery-less Mac (mini/Studio/Pro) there's no section split at all — it's
-# one undivided block — so this also falls back to the first disablesleep
-# line found before any section header shows up.
-- name: Check current AC power disablesleep setting
-  ansible.builtin.shell: >-
-    pmset -g custom | awk '/^[A-Za-z ]+ Power:/{sect=$0} /disablesleep/{if (sect == "" || sect ~ /^AC Power:/) {print $2; exit}}'
+# `pmset -c disablesleep 1` doesn't get reported back under that name —
+# pmset -g custom doesn't list it at all, at least on hardware without a
+# battery. pmset -g (no "custom") shows it as "SleepDisabled" under
+# "System-wide power settings:" instead, confirmed against actual output.
+- name: Check current SleepDisabled setting
+  ansible.builtin.shell: pmset -g | awk '/SleepDisabled/{print $2}'
   register: current_disablesleep
   changed_when: false
 
