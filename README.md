@@ -12,6 +12,7 @@ being. More to come on that, maybe.
 | `mac_app_store` | Installs App Store apps via `mas` |
 | `chromium_pwas` | Installs PWAs in ungoogled-chromium |
 | `macos_settings` | Sets os-level settings |
+| `app_associations` | Sets default browser/mail app and file-type handlers |
 | `dock_pins` | Sets what's pinned to the Dock |
 
 Package lists and Mac App Store IDs live in [group_vars/all.yml](group_vars/all.yml).

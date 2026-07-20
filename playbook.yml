@@ -44,6 +44,10 @@
           tags: macos_settings
 
         - ansible.builtin.include_role:
+            name: app_associations
+          tags: app_associations
+
+        - ansible.builtin.include_role:
             name: dock_pins
           tags: dock_pins
       always:
