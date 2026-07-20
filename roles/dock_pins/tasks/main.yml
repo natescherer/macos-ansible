@@ -1,0 +1,49 @@
+---
+# persistent-apps is an array of dicts, which osx_defaults can't express —
+# it only handles flat string/bool/int values. `defaults write` itself
+# understands old-style ASCII plist syntax for dict/array literals passed
+# as arguments, so we build one such literal per app and hand the whole
+# thing to `defaults write ... -array` via argv (bypassing the shell
+# entirely, so none of the braces/quotes/semicolons need escaping). Using
+# `-array` (not `-array-add`) replaces the whole list each run, so this is
+# idempotent and also removes whatever Dock icons macOS ships by default.
+# Finder isn't listed here on purpose — it's a fixed icon macOS always
+# shows first and isn't actually part of persistent-apps.
+- name: Check which pinned Dock apps are actually installed
+  ansible.builtin.stat:
+    # file:// URLs don't understand a leading ~ the way a shell does, so it
+    # has to be expanded to the real home directory first, e.g. for apps
+    # installed per-user (~/Applications/Chromium Apps.localized/...).
+    path: "{{ item | regex_replace('^~/', ansible_facts.env.HOME + '/') }}"
+  loop: "{{ dock_pinned_apps }}"
+  loop_control:
+    label: "{{ item }}"
+  register: dock_pinned_apps_stat
+
+- name: Warn about Dock apps that aren't installed
+  ansible.builtin.debug:
+    msg: "Not pinning {{ item.invocation.module_args.path }} to the Dock — it isn't installed"
+  loop: "{{ dock_pinned_apps_stat.results }}"
+  loop_control:
+    label: "{{ item.invocation.module_args.path }}"
+  when: not item.stat.exists
+
+- name: Build Dock tile entries for pinned apps
+  ansible.builtin.set_fact:
+    dock_tile_args: "{{ (dock_tile_args | default([])) + [tile] }}"
+  loop: "{{ dock_pinned_apps_stat.results }}"
+  loop_control:
+    label: "{{ item.invocation.module_args.path }}"
+  when: item.stat.exists
+  vars:
+    tile: >-
+      {"tile-data"={"file-data"={"_CFURLString"="file://{{ item.invocation.module_args.path }}/";"_CFURLStringType"=0;};};"tile-type"="file-tile";}
+
+# Guarded so a run where none of the pinned apps are installed yet doesn't
+# wipe the Dock down to an empty array.
+- name: Pin apps to the Dock
+  ansible.builtin.command:
+    argv: "{{ ['defaults', 'write', 'com.apple.dock', 'persistent-apps', '-array'] + dock_tile_args }}"
+  when: dock_tile_args is defined and dock_tile_args | length > 0
+  changed_when: true
+  notify: Restart Dock

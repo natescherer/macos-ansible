@@ -8,6 +8,28 @@ homebrew_taps:
 homebrew_autoupdate_args: "43200 --upgrade --cleanup --immediate --sudo"
 homebrew_autoupdate_plist: "{{ ansible_facts.env.HOME }}/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"
 
+# Apps pinned to the Dock, left to right, as full paths to their .app
+# bundle. This replaces the Dock's whole pinned-app list (including
+# whatever macOS ships by default), so leave nothing off the list you want
+# to keep. Finder isn't included — it's a fixed icon macOS always shows
+# first, not something in this list.
+dock_pinned_apps:
+  - /Applications/Utilities/Activity Monitor.app
+  - /Applications/System Settings.app
+  - /Applications/Ghostty.app
+  - /Applications/Microsoft Outlook.app
+  - /Applications/Messages.app
+  - /Applications/Discord.app
+  - /Applications/Firefox.app
+  - /Applications/Brave Browser.app
+  - /Applications/TickTick.app
+  - /Applications/AnyList.app
+  - /Applications/Obsidian.app
+  - /Applications/VSCodium.app
+  - /Applications/Visual Studio Code.app
+  - /Applications/Music.app
+  - ~/Applications/Chromium Apps.localized/YouTube.app
+
 # Formulas (CLI tools / non-GUI packages)
 homebrew_formulas:
   - chezmoi

@@ -42,6 +42,10 @@
         - ansible.builtin.include_role:
             name: macos_settings
           tags: macos_settings
+
+        - ansible.builtin.include_role:
+            name: dock_pins
+          tags: dock_pins
       always:
         - name: Revoke passwordless sudo
           ansible.builtin.file:
