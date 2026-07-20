@@ -45,12 +45,15 @@
     state: present
   notify: Restart Control Center
 
-# pmset -g custom lists settings per power source, so this has to track
-# which "<Source> Power:" section it's currently under rather than just
-# grepping for disablesleep — the same key appears once per source.
+# On a Mac with a battery, pmset -g custom splits settings into separate
+# "AC Power:"/"Battery Power:" sections and disablesleep appears once per
+# section, so this has to track which one it's currently under. On a
+# battery-less Mac (mini/Studio/Pro) there's no section split at all — it's
+# one undivided block — so this also falls back to the first disablesleep
+# line found before any section header shows up.
 - name: Check current AC power disablesleep setting
   ansible.builtin.shell: >-
-    pmset -g custom | awk '/^[A-Za-z ]+ Power:/{sect=$0} sect ~ /^AC Power:/ && /disablesleep/{print $2}'
+    pmset -g custom | awk '/^[A-Za-z ]+ Power:/{sect=$0} /disablesleep/{if (sect == "" || sect ~ /^AC Power:/) {print $2; exit}}'
   register: current_disablesleep
   changed_when: false
 
