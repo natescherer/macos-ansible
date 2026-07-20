@@ -22,10 +22,10 @@
 
 - name: Warn about Dock apps that aren't installed
   ansible.builtin.debug:
-    msg: "Not pinning {{ item.invocation.module_args.path }} to the Dock — it isn't installed"
+    msg: "Not pinning {{ item.item }} to the Dock — it isn't installed"
   loop: "{{ dock_pinned_apps_stat.results }}"
   loop_control:
-    label: "{{ item.invocation.module_args.path }}"
+    label: "{{ item.item }}"
   when: not item.stat.exists
 
 - name: Build Dock tile entries for pinned apps
@@ -33,11 +33,11 @@
     dock_tile_args: "{{ (dock_tile_args | default([])) + [tile] }}"
   loop: "{{ dock_pinned_apps_stat.results }}"
   loop_control:
-    label: "{{ item.invocation.module_args.path }}"
+    label: "{{ item.item }}"
   when: item.stat.exists
   vars:
     tile: >-
-      {"tile-data"={"file-data"={"_CFURLString"="file://{{ item.invocation.module_args.path }}/";"_CFURLStringType"=0;};};"tile-type"="file-tile";}
+      {"tile-data"={"file-data"={"_CFURLString"="file://{{ item.stat.path }}/";"_CFURLStringType"=0;};};"tile-type"="file-tile";}
 
 # Guarded so a run where none of the pinned apps are installed yet doesn't
 # wipe the Dock down to an empty array.
