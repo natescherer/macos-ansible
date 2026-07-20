@@ -40,15 +40,46 @@
     label: "{{ item.original }}"
   when: not item.exists
 
+# `dockutil --list` prints one tab-separated line per Dock item:
+# label, url, section, plist path, bundle identifier (confirmed against
+# dockutil's own source — Sources/DockUtil/Dock.swift's printList()).
+# Comparing the current persistent-apps paths against what we want lets the
+# clear+repin below be skipped entirely when nothing actually needs to
+# change, instead of doing it unconditionally on every run.
+- name: Check current Dock pins
+  ansible.builtin.command: dockutil --list
+  environment:
+    PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
+  register: dock_current_list
+  changed_when: false
+
+- name: Extract currently pinned persistent-apps paths
+  ansible.builtin.set_fact:
+    dock_current_persistent_paths: "{{ (dock_current_persistent_paths | default([])) + ([field_path] if field_section == 'persistent-apps' else []) }}"
+  loop: "{{ dock_current_list.stdout_lines }}"
+  loop_control:
+    label: "{{ item }}"
+  vars:
+    fields: "{{ item.split('\t') }}"
+    field_section: "{{ fields[2] | default('') }}"
+    field_path: "{{ fields[1] | default('') | regex_replace('^file://', '') | regex_replace('/$', '') }}"
+
+- name: Determine whether the Dock's pinned apps need to change
+  ansible.builtin.set_fact:
+    dock_pins_need_update: "{{ (dock_current_persistent_paths | default([])) != desired_paths }}"
+  vars:
+    desired_paths: "{{ dock_pinned_apps_resolved | selectattr('exists') | map(attribute='path') | list }}"
+
 # Clear the Dock first so re-running this doesn't just keep appending, and
 # so whatever macOS ships pinned by default gets replaced rather than kept
 # alongside dock_pinned_apps. Guarded so a run where none of the requested
-# apps are actually installed yet doesn't wipe the Dock down to empty.
+# apps are actually installed yet doesn't wipe the Dock down to empty, and
+# so a run where the Dock already matches dock_pinned_apps doesn't touch it.
 - name: Clear existing Dock pins
   ansible.builtin.command: dockutil --remove all --no-restart
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
-  when: dock_pinned_apps_resolved | selectattr('exists') | list | length > 0
+  when: dock_pins_need_update and dock_pinned_apps_resolved | selectattr('exists') | list | length > 0
   changed_when: true
 
 - name: Pin apps to the Dock
@@ -58,6 +89,6 @@
   loop: "{{ dock_pinned_apps_resolved }}"
   loop_control:
     label: "{{ item.original }}"
-  when: item.exists
+  when: item.exists and dock_pins_need_update
   changed_when: true
   notify: Restart Dock
