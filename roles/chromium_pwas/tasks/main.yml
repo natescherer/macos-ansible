@@ -1,4 +1,9 @@
 ---
+- name: Check whether Chromium is installed
+  ansible.builtin.stat:
+    path: "/Applications/Chromium.app"
+  register: chromium_app
+
 # Chromium reads WebAppInstallForceList (and other enterprise policies) only
 # from the "Managed Preferences" domain, not a regular ~/Library/Preferences
 # plist — a plain `defaults write org.chromium.Chromium ...` would land in
@@ -9,6 +14,19 @@
 # can't be freely removed the normal way — traded deliberately for getting
 # a real, manifest-icon-having, chrome://apps-tracked install out of a
 # script.
+# /Library/Managed Preferences isn't guaranteed to exist — it's normally
+# created the first time a configuration profile/MDM enrollment lands on
+# the Mac, which may never have happened on a fresh install.
+- name: Ensure /Library/Managed Preferences exists
+  ansible.builtin.file:
+    path: "/Library/Managed Preferences"
+    state: directory
+    owner: root
+    group: wheel
+    mode: "0755"
+  become: true
+  when: chromium_app.stat.exists and chromium_web_apps | length > 0
+
 - name: Force-install PWAs in Chromium
   ansible.builtin.template:
     src: org.chromium.Chromium.plist.j2
@@ -18,7 +36,7 @@
     mode: "0644"
   become: true
   register: chromium_policy
-  when: chromium_web_apps | length > 0
+  when: chromium_app.stat.exists and chromium_web_apps | length > 0
 
 # Chromium only actually acts on WebAppInstallForceList — downloading each
 # app's manifest/icon and creating the installed web app — once it's
