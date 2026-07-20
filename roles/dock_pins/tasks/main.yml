@@ -5,25 +5,40 @@
 # resolved the tiles either way. dockutil is a small, actively-maintained
 # tool purpose-built for this exact job (https://github.com/dockutil/dockutil)
 # and sidesteps the whole class of ASCII-plist-literal guesswork.
-- name: Check which pinned Dock apps are actually installed
-  ansible.builtin.stat:
-    # dockutil needs a real absolute path — a leading ~ isn't expanded the
-    # way a shell would, so it has to be resolved to the real home
-    # directory first, e.g. for apps installed per-user
-    # (~/Applications/Chromium Apps.localized/...).
-    path: "{{ item | regex_replace('^~/', ansible_facts.env.HOME + '/') }}"
+#
+# Apple's own bundled apps (Music, Messages, System Settings, Activity
+# Monitor, etc.) don't actually live at /Applications/Foo.app since Big Sur
+# — that path only holds third-party installs. The real ones are under
+# /System/Applications/ (or /System/Applications/Utilities/ for things like
+# Activity Monitor); Finder just merges both into one visible "Applications"
+# folder, which is why they look like they belong at the plain path. So
+# each entry is resolved against a few candidate locations rather than
+# assuming dock_pinned_apps' literal path is where the app actually is.
+- name: Resolve each pinned Dock app to wherever it actually lives
+  ansible.builtin.set_fact:
+    dock_pinned_apps_resolved: "{{ (dock_pinned_apps_resolved | default([])) + [{'original': item, 'path': resolved_path, 'exists': resolved_path | length > 0}] }}"
   loop: "{{ dock_pinned_apps }}"
   loop_control:
     label: "{{ item }}"
-  register: dock_pinned_apps_stat
+  vars:
+    expanded: "{{ item | regex_replace('^~/', ansible_facts.env.HOME + '/') }}"
+    candidates: >-
+      {{
+        [
+          expanded,
+          expanded | regex_replace('^/Applications/', '/System/Applications/'),
+          expanded | regex_replace('^/Applications/', '/System/Applications/Utilities/')
+        ] | unique
+      }}
+    resolved_path: "{{ lookup('ansible.builtin.first_found', candidates, errors='ignore') | default('', true) }}"
 
 - name: Warn about Dock apps that aren't installed
   ansible.builtin.debug:
-    msg: "Not pinning {{ item.item }} to the Dock — it isn't installed"
-  loop: "{{ dock_pinned_apps_stat.results }}"
+    msg: "Not pinning {{ item.original }} to the Dock — it isn't installed"
+  loop: "{{ dock_pinned_apps_resolved }}"
   loop_control:
-    label: "{{ item.item }}"
-  when: not item.stat.exists
+    label: "{{ item.original }}"
+  when: not item.exists
 
 # Clear the Dock first so re-running this doesn't just keep appending, and
 # so whatever macOS ships pinned by default gets replaced rather than kept
@@ -33,16 +48,16 @@
   ansible.builtin.command: dockutil --remove all --no-restart
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
-  when: dock_pinned_apps_stat.results | selectattr('stat.exists') | list | length > 0
+  when: dock_pinned_apps_resolved | selectattr('exists') | list | length > 0
   changed_when: true
 
 - name: Pin apps to the Dock
-  ansible.builtin.command: dockutil --add "{{ item.stat.path }}" --no-restart
+  ansible.builtin.command: dockutil --add "{{ item.path }}" --no-restart
   environment:
     PATH: "{{ homebrew_prefix }}/bin:{{ ansible_facts.env.PATH }}"
-  loop: "{{ dock_pinned_apps_stat.results }}"
+  loop: "{{ dock_pinned_apps_resolved }}"
   loop_control:
-    label: "{{ item.item }}"
-  when: item.stat.exists
+    label: "{{ item.original }}"
+  when: item.exists
   changed_when: true
   notify: Restart Dock
