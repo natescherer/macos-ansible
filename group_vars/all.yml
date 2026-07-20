@@ -43,6 +43,7 @@ homebrew_casks:
   - obsidian
   - stats
   - thaw
+  - ungoogled-chromium
   - visual-studio-code
   - vlc
   - vscodium
@@ -64,3 +65,10 @@ mac_app_store_apps:
   "Windows App": 1295203466
   Xcode: 497799835
   "Yubico Authenticator": 1497506650
+
+# PWAs to install in ungoogled-chromium via WebAppInstallForceList policy.
+# Each entry accepts any key WebAppInstallForceList supports — see
+# https://chromeenterprise.google/policies/#WebAppInstallForceList
+chromium_web_apps:
+  - url: "https://www.youtube.com"
+    default_launch_container: window

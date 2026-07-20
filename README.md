@@ -10,6 +10,7 @@ being. More to come on that, maybe.
 |---|---|
 | `homebrew` | Installs Homebrew, taps, all formulas/casks, and `homebrew-autoupdate` |
 | `mac_app_store` | Installs App Store apps via `mas` |
+| `chromium_pwas` | Installs PWAs in ungoogled-chromium |
 | `macos_settings` | Sets os-level settings |
 
 Package lists and Mac App Store IDs live in [group_vars/all.yml](group_vars/all.yml).
