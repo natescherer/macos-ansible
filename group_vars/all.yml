@@ -14,8 +14,8 @@ homebrew_autoupdate_plist: "{{ ansible_facts.env.HOME }}/Library/LaunchAgents/co
 # to keep. Finder isn't included — it's a fixed icon macOS always shows
 # first, not something in this list.
 dock_pinned_apps:
-  - /Applications/Utilities/Activity Monitor.app
   - /Applications/System Settings.app
+  - /Applications/Utilities/Activity Monitor.app
   - /Applications/Ghostty.app
   - /Applications/Microsoft Outlook.app
   - /Applications/Messages.app
