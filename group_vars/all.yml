@@ -35,6 +35,7 @@ homebrew_formulas:
   - chezmoi
   - coreutils
   - curl
+  - dockutil
   - fzf
   - git
   - jq
