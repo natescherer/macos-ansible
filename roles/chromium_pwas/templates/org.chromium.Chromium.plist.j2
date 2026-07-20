@@ -8,7 +8,14 @@
         <dict>
 {% for key, value in app.items() %}
             <key>{{ key }}</key>
-{% if value is sameas true %}
+{% if value is mapping %}
+            <dict>
+{% for subkey, subvalue in value.items() %}
+                <key>{{ subkey }}</key>
+                <string>{{ subvalue | e }}</string>
+{% endfor %}
+            </dict>
+{% elif value is sameas true %}
             <true/>
 {% elif value is sameas false %}
             <false/>

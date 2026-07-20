@@ -50,15 +50,15 @@
   ansible.builtin.command: open -g -a Chromium
   when: chromium_policy is changed
 
-# Chromium's web app installer hardcodes this folder name (Chrome Apps, not
-# Chromium Apps) even in Chrome forks — confirmed against Chromium's own
-# source (web_app_shortcut_mac.mm), not specifically re-verified against an
-# ungoogled-chromium build. If it ever turns out to differ, this will just
-# retry for a minute and move on (failed_when: false below) rather than
-# blocking the whole run on it.
+# Confirmed on-device: ungoogled-chromium uses "Chromium Apps.localized"
+# here (unlike upstream Chromium/Chrome, which hardcodes "Chrome Apps" per
+# its source — this fork apparently derives it from the product name
+# instead). If a future build ever changes this, the task will just retry
+# for a minute and move on (failed_when: false below) rather than blocking
+# the whole run on it.
 - name: Wait for Chromium to install the forced PWAs
   ansible.builtin.find:
-    paths: "{{ ansible_facts.env.HOME }}/Applications/Chrome Apps.localized"
+    paths: "{{ ansible_facts.env.HOME }}/Applications/Chromium Apps.localized"
     patterns: "*.app"
     file_type: directory
   register: chromium_installed_pwas
