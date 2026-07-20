@@ -11,9 +11,10 @@
 # shows first and isn't actually part of persistent-apps.
 - name: Check which pinned Dock apps are actually installed
   ansible.builtin.stat:
-    # file:// URLs don't understand a leading ~ the way a shell does, so it
-    # has to be expanded to the real home directory first, e.g. for apps
-    # installed per-user (~/Applications/Chromium Apps.localized/...).
+    # The Dock's tile-data needs a real absolute path — a leading ~ isn't
+    # expanded the way a shell would, so it has to be resolved to the real
+    # home directory first, e.g. for apps installed per-user
+    # (~/Applications/Chromium Apps.localized/...).
     path: "{{ item | regex_replace('^~/', ansible_facts.env.HOME + '/') }}"
   loop: "{{ dock_pinned_apps }}"
   loop_control:
@@ -36,8 +37,13 @@
     label: "{{ item.item }}"
   when: item.stat.exists
   vars:
+    # _CFURLStringType 0 means "_CFURLString is a raw POSIX path" — no
+    # file:// scheme, no trailing slash. Getting this wrong (as an earlier
+    # version of this task did, prefixing file:// and adding a trailing
+    # slash) doesn't error out; it just leaves the Dock unable to resolve
+    # the tile, which shows up as a plain "?" icon.
     tile: >-
-      {"tile-data"={"file-data"={"_CFURLString"="file://{{ item.stat.path }}/";"_CFURLStringType"=0;};};"tile-type"="file-tile";}
+      {"tile-data"={"file-data"={"_CFURLString"="{{ item.stat.path }}";"_CFURLStringType"=0;};};"tile-type"="file-tile";}
 
 # Guarded so a run where none of the pinned apps are installed yet doesn't
 # wipe the Dock down to an empty array.
