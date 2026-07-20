@@ -16,6 +16,11 @@
     # task actually running `brew install`. Granting temporary NOPASSWD sudo
     # for the run sidesteps that entirely, and the `always` block below
     # guarantees it gets revoked even if a task in the middle fails.
+    # This genuinely creates/deletes a file every run (it's not meant to
+    # persist between runs, so there's no "already correct" state to
+    # compare against) — changed_when: false here is a deliberate choice to
+    # keep the run output clean, not a correctness fix like the ones
+    # elsewhere in this repo.
     - name: Allow passwordless sudo for the duration of this run
       ansible.builtin.copy:
         dest: "{{ sudoers_dropin }}"
@@ -23,6 +28,7 @@
         mode: "0440"
         validate: "visudo -cf %s"
       become: true
+      changed_when: false
       tags: always
 
     - name: Run the build
@@ -56,4 +62,5 @@
             path: "{{ sudoers_dropin }}"
             state: absent
           become: true
+          changed_when: false
           tags: always
