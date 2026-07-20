@@ -1,12 +1,13 @@
 ---
 # persistent-apps is an array of dicts, which osx_defaults can't express —
 # it only handles flat string/bool/int values. `defaults write` itself
-# understands old-style ASCII plist syntax for dict/array literals passed
-# as arguments, so we build one such literal per app and hand the whole
-# thing to `defaults write ... -array` via argv (bypassing the shell
-# entirely, so none of the braces/quotes/semicolons need escaping). Using
-# `-array` (not `-array-add`) replaces the whole list each run, so this is
-# idempotent and also removes whatever Dock icons macOS ships by default.
+# understands old-style ASCII plist syntax for a dict/array literal passed
+# as a single argument, so each app's tile is built as one such literal and
+# then joined into one "( {...}, {...} )" array argument for `defaults
+# write` (see the Pin apps to the Dock task below for why it's one combined
+# argument rather than several). Writing the whole array fresh each run
+# (rather than appending) is what makes this idempotent, and as a side
+# effect it also removes whatever Dock icons macOS ships by default.
 # Finder isn't listed here on purpose — it's a fixed icon macOS always
 # shows first and isn't actually part of persistent-apps.
 - name: Check which pinned Dock apps are actually installed
@@ -45,11 +46,23 @@
     tile: >-
       {"tile-data"={"file-data"={"_CFURLString"="{{ item.stat.path }}";"_CFURLStringType"=0;};};"tile-type"="file-tile";}
 
+# `-array val1 val2 ...` turned out not to re-parse each element as nested
+# ASCII-plist syntax the way a single collection-literal argument does —
+# every tile ended up as a literal string instead of a dict, which is why
+# they all showed as "?". Passing the whole array as one old-style
+# "( {...}, {...} )" argument is the unambiguous, universally-used form of
+# this recipe and avoids that per-element parsing question entirely.
+#
 # Guarded so a run where none of the pinned apps are installed yet doesn't
 # wipe the Dock down to an empty array.
 - name: Pin apps to the Dock
   ansible.builtin.command:
-    argv: "{{ ['defaults', 'write', 'com.apple.dock', 'persistent-apps', '-array'] + dock_tile_args }}"
+    argv:
+      - defaults
+      - write
+      - com.apple.dock
+      - persistent-apps
+      - "({{ dock_tile_args | join(',') }})"
   when: dock_tile_args is defined and dock_tile_args | length > 0
   changed_when: true
   notify: Restart Dock
