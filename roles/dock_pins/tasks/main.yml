@@ -42,7 +42,10 @@
 
 # `dockutil --list` prints one tab-separated line per Dock item:
 # label, url, section, plist path, bundle identifier (confirmed against
-# dockutil's own source — Sources/DockUtil/Dock.swift's printList()).
+# dockutil's own source — Sources/DockUtil/Dock.swift's printList()). The
+# section value is "persistentApps" (camelCase, dockutil's own label for
+# the section — not the underlying plist key), and the url is percent-
+# encoded (spaces show up as %20), both confirmed against real output.
 # Comparing the current persistent-apps paths against what we want lets the
 # clear+repin below be skipped entirely when nothing actually needs to
 # change, instead of doing it unconditionally on every run.
@@ -55,14 +58,16 @@
 
 - name: Extract currently pinned persistent-apps paths
   ansible.builtin.set_fact:
-    dock_current_persistent_paths: "{{ (dock_current_persistent_paths | default([])) + ([field_path] if field_section == 'persistent-apps' else []) }}"
+    dock_current_persistent_paths: "{{ (dock_current_persistent_paths | default([])) + ([field_path] if field_section == 'persistentApps' else []) }}"
   loop: "{{ dock_current_list.stdout_lines }}"
   loop_control:
     label: "{{ item }}"
   vars:
     fields: "{{ item.split('\t') }}"
     field_section: "{{ fields[2] | default('') }}"
-    field_path: "{{ fields[1] | default('') | regex_replace('^file://', '') | regex_replace('/$', '') }}"
+    # Only %20 is decoded (not full percent-decoding) — that's the one
+    # that actually shows up for spaces in .app names in practice.
+    field_path: "{{ fields[1] | default('') | regex_replace('^file://', '') | regex_replace('/$', '') | regex_replace('%20', ' ') }}"
 
 - name: Determine whether the Dock's pinned apps need to change
   ansible.builtin.set_fact:
